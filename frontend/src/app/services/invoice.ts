@@ -39,7 +39,7 @@ export interface Invoice {
   providedIn: 'root'
 })
 export class InvoiceService {
-  private apiUrl = 'http://localhost:3000/api/invoices';
+  private apiUrl = '/api/invoices';
   private invoicesSubject = new BehaviorSubject<Invoice[]>([]);
   invoices$ = this.invoicesSubject.asObservable();
 

@@ -242,7 +242,81 @@ app.put('/api/invoices/:id', async (req, res) => {
     res.json(data[0]);
 });
 
-// Start Server
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// Auth Routes
+
+// POST /api/auth/login - Verify password
+app.post('/api/auth/login', async (req, res) => {
+    const { password } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('settings')
+            .select('value')
+            .eq('key', 'admin_password')
+            .single();
+
+        if (error) {
+            // If table or key doesn't exist, fallback to default for safety/setup
+            if (error.code === 'PGRST116') { // JSON object requested, multiple (or no) rows returned
+                if (password === 'admin123') return res.json({ success: true });
+            }
+            console.error('Auth error:', error);
+            return res.status(500).json({ error: 'Authentication failed' });
+        }
+
+        if (data && data.value === password) {
+            res.json({ success: true });
+        } else {
+            res.status(401).json({ error: 'Invalid password' });
+        }
+    } catch (err) {
+        console.error('Server auth error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
+
+// POST /api/auth/change-password - Update password
+app.post('/api/auth/change-password', async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        // 1. Verify current password
+        const { data: currentData, error: fetchError } = await supabase
+            .from('settings')
+            .select('value')
+            .eq('key', 'admin_password')
+            .single();
+
+        if (fetchError) {
+            return res.status(500).json({ error: 'Failed to verify current password' });
+        }
+
+        if (currentData.value !== currentPassword) {
+            return res.status(401).json({ error: 'Incorrect current password' });
+        }
+
+        // 2. Update password
+        const { error: updateError } = await supabase
+            .from('settings')
+            .update({ value: newPassword })
+            .eq('key', 'admin_password');
+
+        if (updateError) {
+            return res.status(500).json({ error: 'Failed to update password' });
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Password change error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Start Server
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
+}
+
+module.exports = app;
