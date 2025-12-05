@@ -92,7 +92,6 @@ export class PdfService {
             body: invoice.items.map((item, index) => [
                 index + 1,
                 item.description,
-                'Full Value',
                 `${item.price.toLocaleString()}/-`
             ]),
             theme: 'plain',
