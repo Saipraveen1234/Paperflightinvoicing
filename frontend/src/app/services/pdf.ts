@@ -67,8 +67,7 @@ export class PdfService {
         const details = invoice.companyDetails;
 
         doc.setFont('helvetica', 'bold');
-        doc.text(`PAN Card: ${details.panNumber}`, rightColX, yPos);
-        yPos += 6;
+
         doc.text(`Payment Method: Bank Transfer`, rightColX, yPos);
         yPos += 6;
         doc.text(`Account number: ${details.accountNumber}`, rightColX, yPos);
@@ -78,13 +77,18 @@ export class PdfService {
         doc.text(`IFSC Code: ${details.ifscCode}`, rightColX, yPos);
         yPos += 6;
         doc.text(`Branch: ${details.branch}`, rightColX, yPos);
+        yPos += 6;
+        if (details.pan) {
+            doc.text(`PAN Card: ${details.pan}`, rightColX, yPos);
+        }
+
 
         // Table
         yPos = 110; // Start table below address
 
         autoTable(doc, {
             startY: yPos,
-            head: [['S.No', 'Item Description', 'Full Value', 'Price in Rs']],
+            head: [['S.No', 'Item Description', 'Price in Rs']],
             body: invoice.items.map((item, index) => [
                 index + 1,
                 item.description,
@@ -137,7 +141,7 @@ export class PdfService {
         // Signature
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(14);
-        doc.text('Vibhu', 160, footerY - 5, { align: 'center' });
+        doc.text('', 160, footerY - 5, { align: 'center' });
         doc.setFontSize(10);
         doc.text('Vibhu Yadati', 160, footerY + 5, { align: 'center' });
         doc.line(140, footerY, 180, footerY); // Line under signature
